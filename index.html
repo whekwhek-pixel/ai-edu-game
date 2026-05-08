@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>어휘 용사의 모험 - Stage 1</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;500;700&display=swap');
+
+        :root {
+            --bg-base: #f0e5de;    
+            --point-teal: #7da3a1;  
+            --accent-coral: #d99879; 
+            --text-dark: #4a4e4d;   
+            --card-bg: rgba(255, 255, 255, 0.94);
+            --correct: #8db596;
+            --wrong: #d68080;
+            --rank-gold: #d4af37;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(180deg, #f0e5de 0%, #cbdadb 100%);
+            color: var(--text-dark);
+            font-family: 'Noto Sans KR', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .geometry {
+            position: absolute;
+            background: var(--point-teal);
+            opacity: 0.1;
+            z-index: -1;
+            transform: rotate(45deg);
+        }
+        .g1 { width: 300px; height: 300px; top: -150px; left: -50px; border-radius: 60px; }
+        .g2 { width: 200px; height: 200px; bottom: -80px; right: -40px; background: var(--accent-coral); border-radius: 50%; }
+
+        #game-box {
+            width: 90%;
+            max-width: 460px;
+            background: var(--card-bg);
+            padding: 50px 35px;
+            border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.05);
+            text-align: center;
+            position: relative;
+            backdrop-filter: blur(15px);
+        }
+
+        .screen { display: none; }
+        .active { display: block; animation: fadeIn 1s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { font-weight: 700; color: var(--point-teal); margin-bottom: 10px; letter-spacing: -1px; font-size: 1.7rem; }
+        .subtitle { font-weight: 300; font-size: 0.9rem; color: var(--accent-coral); margin-bottom: 40px; }
+
+        #input-name {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-bottom: 1.5px solid #d1d1d1;
+            background: transparent;
+            font-size: 1.1rem;
+            margin-bottom: 35px;
+            outline: none;
+            text-align: center;
+        }
+
+        .btn {
+            background: var(--point-teal);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+        .btn:hover { background: var(--accent-coral); transform: translateY(-3px); }
+
+        .status { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 15px; color: #999; }
+        #timer-wrap { width: 100%; height: 2px; background: #e0e0e0; margin-bottom: 35px; }
+        #timer-bar { width: 100%; height: 100%; background: var(--accent-coral); transition: width 10s linear; }
+
+        #q-text { font-size: 1.25rem; line-height: 1.8; margin-bottom: 35px; font-weight: 500; }
+
+        .opt-btn {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            padding: 18px;
+            width: 100%;
+            margin-bottom: 12px;
+            border-radius: 18px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text-dark);
+            transition: 0.3s;
+        }
+        .opt-btn:hover { border-color: var(--point-teal); transform: translateY(-2px); }
+
+        #feedback {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            text-align: left;
+            background: rgba(125, 163, 161, 0.05);
+            border-left: 3px solid var(--point-teal);
+            display: none;
+        }
+
+        /* 랭킹 스타일 */
+        #rank-container {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .rank-title { font-weight: 700; color: var(--rank-gold); margin-bottom: 10px; }
+        .rank-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dotted #ddd; }
+        .rank-item:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+    <div class="geometry g1"></div>
+    <div class="geometry g2"></div>
+
+    <div id="game-box">
+        <div id="screen-start" class="screen active">
+            <h1>어휘 용사의 모험</h1>
+            <p class="subtitle">지혜의 숲에서 들려오는 신비로운 선율</p>
+            <input type="text" id="input-name" placeholder="용사의 이름을 입력하세요">
+            <button class="btn" id="btn-start">모험 시작</button>
+        </div>
+
+        <div id="screen-quiz" class="screen">
+            <div class="status">
+                <span>QUEST <span id="idx-view">1</span>/15</span>
+                <span>LIFE <span id="hp-view">15</span></span>
+            </div>
+            <div id="timer-wrap"><div id="timer-bar"></div></div>
+            <div id="q-text"></div>
+            <div id="opt-wrap"></div>
+            <div id="feedback"></div>
+            <button id="btn-next" class="btn" style="display:none; margin-top:25px;">다음 구역으로</button>
+        </div>
+
+        <div id="screen-result" class="screen">
+            <h1>여정의 끝</h1>
+            <p id="res-score" style="font-size: 1.3rem; margin: 15px 0; font-weight: 500;"></p>
+            
+            <div id="rank-container">
+                <div class="rank-title">🏆 TOP 5 RANKERS</div>
+                <div id="rank-list">
+                    </div>
+            </div>
+
+            <button class="btn" onclick="location.reload()">다시 도전하기</button>
+        </div>
+    </div>
+
+    <audio id="sound-bgm" loop src="https://assets.mixkit.co/active_storage/sfx/123/123-preview.mp3"></audio>
+    <audio id="sound-o" src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3"></audio>
+    <audio id="sound-x" src="https://assets.mixkit.co/active_storage/sfx/21/21-preview.mp3"></audio>
+
+<script>
+    const quizData = [
+        { q: "동생의 키가 다른 사람보다 (작다 / 적다).", a: ["작다", "적다"], c: 0, f: "<b>작다</b>: 크기나 길이가 덜함 / <b>적다</b>: 수량이 덜함." },
+        { q: "쌍둥이라도 성격은 (다르다 / 틀리다).", a: ["다르다", "틀리다"], c: 0, f: "<b>다르다</b>: 같지 않다 / <b>틀리다</b>: 답이 맞지 않다." },
+        { q: "선생님께서 수학 공식을 (가르쳐 / 가리켜) 주셨다.", a: ["가르쳐", "가리켜"], c: 0, f: "<b>가르치다</b>: 지식을 알게 함 / <b>가리키다</b>: 방향 지목." },
+        { q: "우리나라를 낮추어 '저희나라'라고 부르는 것은?", a: ["올바르다", "잘못되었다"], c: 1, f: "자신의 나라는 낮추지 않습니다. <b>'우리나라'</b>가 정답입니다." },
+        { q: "내 꿈이 꼭 이루어지길 (바라 / 바래).", a: ["바라", "바래"], c: 0, f: "<b>바라다</b>의 활용형은 '바라'입니다." },
+        { q: "허리를 세우고 (반드시 / 반듯이) 앉아라.", a: ["반드시", "반듯이"], c: 1, f: "<b>반듯이</b>: 모양이 바르게 / <b>반드시</b>: 틀림없이 꼭." },
+        { q: "밭에 (거름 / 걸음)을/를 주었다.", a: ["거름", "걸음"], c: 0, f: "<b>거름</b>: 비료 / <b>걸음</b>: 걷는 동작." },
+        { q: "어디에 (있든지 / 있던지) 항상 건강해라.", a: ["있든지", "있던지"], c: 0, f: "선택은 <b>-든지</b>, 과거 회상은 -던지입니다." },
+        { q: "(윗몸 / 웃몸) 일으키기 중 맞는 것은?", a: ["윗몸", "웃몸"], c: 0, f: "위아래 대립이 있으므로 <b>'윗-'</b>을 씁니다." },
+        { q: "딱딱한 조개 (껍데기 / 껍질)을/를 주웠다.", a: ["껍데기", "껍질"], c: 0, f: "딱딱한 것은 <b>껍데기</b>입니다." },
+        { q: "산의 가장 높은 (봉우리 / 봉오리)에 올랐다.", a: ["봉우리", "봉오리"], c: 0, f: "산꼭대기는 <b>봉우리</b>, 꽃망울은 봉오리입니다." },
+        { q: "거리가 너무 멀어서 잘 (안 / 않) 보여요.", a: ["안", "않"], c: 0, f: "부정의 의미인 '아니'의 줄임말 <b>'안'</b>이 맞습니다." },
+        { q: "내년에 열 살이 (되요 / 돼요).", a: ["되요", "돼요"], c: 1, f: "<b>돼</b>는 '되어'의 줄임말입니다." },
+        { q: "어제 본 영화는 정말 슬프(데 / 대).", a: ["데", "대"], c: 0, f: "직접 경험한 사실은 <b>-데</b>입니다." },
+        { q: "오늘따라 (왠지 / 웬지) 기분이 좋다.", a: ["왠지", "웬지"], c: 0, f: "<b>왠지</b>(왜인지)를 제외한 나머지는 모두 '웬'입니다." }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+    let timer;
+    let userName = "";
+
+    document.getElementById('btn-start').addEventListener('click', () => {
+        userName = document.getElementById('input-name').value.trim() || "지혜의 용사";
+        const bgm = document.getElementById('sound-bgm');
+        bgm.volume = 0.12;
+        bgm.play().catch(() => {});
+        
+        document.getElementById('screen-start').classList.remove('active');
+        document.getElementById('screen-quiz').classList.add('active');
+        loadQuestion();
+    });
+
+    function loadQuestion() {
+        if (currentIdx >= quizData.length) {
+            endGame();
+            return;
+        }
+
+        document.getElementById('idx-view').innerText = currentIdx + 1;
+        const data = quizData[currentIdx];
+        document.getElementById('q-text').innerText = data.q;
+        const optWrap = document.getElementById('opt-wrap');
+        optWrap.innerHTML = "";
+        document.getElementById('feedback').style.display = "none";
+        document.getElementById('btn-next').style.display = "none";
+
+        data.a.forEach((txt, i) => {
+            const b = document.createElement('button');
+            b.className = 'opt-btn';
+            b.innerText = txt;
+            b.onclick = () => checkAns(i);
+            optWrap.appendChild(b);
+        });
+
+        const bar = document.getElementById('timer-bar');
+        bar.style.transition = 'none'; 
+        bar.style.width = '100%';
+        setTimeout(() => { 
+            bar.style.transition = 'width 10s linear'; 
+            bar.style.width = '0%'; 
+        }, 50);
+
+        clearInterval(timer);
+        timer = setTimeout(() => checkAns(-1), 10000);
+    }
+
+    function checkAns(idx) {
+        clearTimeout(timer);
+        const data = quizData[currentIdx];
+        const fb = document.getElementById('feedback');
+        fb.style.display = "block";
+        document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+
+        if (idx === data.c) {
+            document.getElementById('sound-o').play();
+            fb.innerHTML = `<span style="color:var(--correct); font-weight:700;">✓ 정답입니다.</span><br>${data.f}`;
+            score++;
+        } else {
+            document.getElementById('sound-x').play();
+            fb.innerHTML = `<span style="color:var(--wrong); font-weight:700;">✕ 오답입니다.</span><br>${data.f}`;
+            const hp = document.getElementById('hp-view');
+            hp.innerText = Math.max(0, parseInt(hp.innerText) - 1);
+        }
+        document.getElementById('btn-next').style.display = "block";
+    }
+
+    function endGame() {
+        document.getElementById('screen-quiz').classList.remove('active');
+        document.getElementById('screen-result').classList.add('active');
+        document.getElementById('res-score').innerText = `${userName} 용사, ${score}점을 획득했습니다.`;
+        
+        saveRank(userName, score);
+        displayRank();
+    }
+
+    // 랭킹 저장 로직
+    function saveRank(name, finalScore) {
+        let ranks = JSON.parse(localStorage.getItem('voca_ranks_s1')) || [];
+        ranks.push({ name: name, score: finalScore, date: new Date().toLocaleDateString() });
+        
+        // 점수 내림차순 정렬 후 상위 5개만 유지
+        ranks.sort((a, b) => b.score - a.score);
+        ranks = ranks.slice(0, 5);
+        
+        localStorage.setItem('voca_ranks_s1', JSON.stringify(ranks));
+    }
+
+    // 랭킹 표시 로직
+    function displayRank() {
+        const ranks = JSON.parse(localStorage.getItem('voca_ranks_s1')) || [];
+        const rankList = document.getElementById('rank-list');
+        rankList.innerHTML = "";
+
+        if (ranks.length === 0) {
+            rankList.innerHTML = "<div style='color:#999'>아직 기록이 없습니다.</div>";
+            return;
+        }
+
+        ranks.forEach((r, i) => {
+            const item = document.createElement('div');
+            item.className = 'rank-item';
+            item.innerHTML = `
+                <span>${i + 1}위. ${r.name}</span>
+                <span style="font-weight:700; color:var(--point-teal)">${r.score}점</span>
+            `;
+            rankList.appendChild(item);
+        });
+    }
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+        currentIdx++;
+        loadQuestion();
+    });
+</script>
+</body>
+</html>
